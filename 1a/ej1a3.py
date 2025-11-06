@@ -35,13 +35,45 @@ class MyHTTPRequestHandler(BaseHTTPRequestHandler):
 
         Para otras rutas, devuelve un código de estado 404 (Not Found).
         """
-        # Implementa aquí la lógica para responder a las peticiones GET
-        # 1. Verifica la ruta solicitada (self.path)
-        # 2. Si la ruta es "/ip", envía una respuesta 200 con la IP del cliente en formato JSON
-        # 3. Si la ruta es cualquier otra, envía una respuesta 404
-
-        # PISTA: Para obtener la IP del cliente puedes usar el método auxiliar _get_client_ip()
-        pass
+  # 1. Verificar la ruta solicitada
+        if self.path == '/ip':
+            # 2. Si la ruta es "/ip", enviar respuesta 200 con la IP en JSON
+            
+            # Obtener la IP del cliente
+            client_ip = self._get_client_ip()
+            
+            # Crear la respuesta en formato JSON
+            response_data = {
+                'ip': client_ip
+            }
+            response_json = json.dumps(response_data)
+            
+            # Enviar código de estado 200 (OK)
+            self.send_response(200)
+            
+            # Enviar encabezados
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', len(response_json))
+            self.end_headers()
+            
+            # Enviar el cuerpo de la respuesta
+            self.wfile.write(response_json.encode('utf-8'))
+            
+        else:
+            # 3. Si la ruta es cualquier otra, enviar respuesta 404
+            self.send_response(404)
+            self.send_header('Content-Type', 'application/json')
+            
+            error_response = {
+                'error': 'Not Found',
+                'message': f'La ruta {self.path} no existe'
+            }
+            error_json = json.dumps(error_response)
+            
+            self.send_header('Content-Length', len(error_json))
+            self.end_headers()
+            
+            self.wfile.write(error_json.encode('utf-8'))
 
 
     def _get_client_ip(self):
@@ -53,11 +85,23 @@ class MyHTTPRequestHandler(BaseHTTPRequestHandler):
         Returns:
             str: La dirección IP del cliente
         """
-        # Implementa aquí la lógica para extraer la IP del cliente
-        # 1. Verifica si existe el encabezado 'X-Forwarded-For' (común en servidores con proxy)
-        # 2. Si no existe, verifica otros encabezados comunes como 'X-Real-IP'
-        # 3. Como último recurso, utiliza self.client_address[0]
-        pass
+   # 1. Verificar si existe el encabezado 'X-Forwarded-For'
+        # Este encabezado es común cuando hay proxies o balanceadores de carga
+        forwarded_for = self.headers.get('X-Forwarded-For')
+        if forwarded_for:
+            # X-Forwarded-For puede contener múltiples IPs separadas por comas
+            # La primera IP es la del cliente original
+            return forwarded_for.split(',')[0].strip()
+        
+        # 2. Verificar el encabezado 'X-Real-IP'
+        # Usado por algunos proxies como alternativa a X-Forwarded-For
+        real_ip = self.headers.get('X-Real-IP')
+        if real_ip:
+            return real_ip.strip()
+        
+        # 3. Como último recurso, usar la dirección directa del cliente
+        # self.client_address es una tupla (ip, puerto)
+        return self.client_address[0]
 
 
 def create_server(host="localhost", port=8000):
@@ -70,10 +114,16 @@ def create_server(host="localhost", port=8000):
 
 def run_server(server):
     """
-    Inicia el servidor HTTP
+    Ejecuta el servidor HTTP
     """
     print(f"Servidor iniciado en http://{server.server_name}:{server.server_port}")
-    server.serve_forever()
+    print(f"Prueba accediendo a: http://{server.server_name}:{server.server_port}/ip")
+    print("Presiona Ctrl+C para detener el servidor")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nServidor detenido")
+        server.shutdown()
 
 if __name__ == '__main__':
     server = create_server()
