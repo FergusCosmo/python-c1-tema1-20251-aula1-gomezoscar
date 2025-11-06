@@ -28,7 +28,21 @@ def get_user_ip():
     # 2. Verificar si la petición fue exitosa (código 200)
     # 3. Devolver el texto de la respuesta directamente (contiene la IP)
     # 4. Devolver None si hay algún error
-    pass
+    try:
+        # 1. Realizar la petición GET a la API
+        response = requests.get('https://api.ipify.org')
+        
+        # 2. Verificar si la petición fue exitosa (código 200)
+        if response.status_code == 200:
+            # 3. Devolver el texto de la respuesta (contiene la IP)
+            return response.text
+        else:
+            # Si el código no es 200, devolver None
+            return None
+            
+    except requests.exceptions.RequestException:
+        # 4. Devolver None si hay algún error (conexión, timeout, etc.)
+        return None
 
 if __name__ == "__main__":
     # Ejemplo de uso de la función
