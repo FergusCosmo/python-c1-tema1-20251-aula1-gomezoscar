@@ -23,13 +23,23 @@ def get_user_ip_json():
         str: La dirección IP si la petición es exitosa
         None: Si ocurre un error en la petición
     """
-    # Completa esta función para:
-    # 1. Realizar una petición GET a la URL https://api.ipify.org?format=json
-    # 2. Verificar si la petición fue exitosa (código 200)
-    # 3. Convertir la respuesta a formato JSON
-    # 4. Extraer y devolver la IP del campo "ip" del objeto JSON
-    # 5. Devolver None si hay algún error
-    pass
+    try:
+        # 1. Realizar la petición GET con el parámetro format=json
+        response = requests.get('https://api.ipify.org?format=json')
+        
+        # 2. Verificar si la petición fue exitosa (código 200)
+        if response.status_code == 200:
+            # 3. Convertir la respuesta a formato JSON
+            data = response.json()
+            
+            # 4. Extraer y devolver la IP del campo "ip"
+            return data['ip']
+        else:
+            return None
+            
+    except (requests.exceptions.RequestException, KeyError, ValueError):
+        # 5. Devolver None si hay algún error
+        return None
 
 def get_response_info():
     """
@@ -40,15 +50,24 @@ def get_response_info():
               tiempo de respuesta, tamaño de la respuesta)
         None: Si ocurre un error en la petición
     """
-    # Completa esta función para:
-    # 1. Realizar una petición GET a la URL https://api.ipify.org?format=json
-    # 2. Verificar si la petición fue exitosa (código 200)
-    # 3. Crear y devolver un diccionario con:
-    #    - 'content_type': El tipo de contenido de la respuesta
-    #    - 'elapsed_time': El tiempo que tardó la petición (en milisegundos)
-    #    - 'response_size': El tamaño de la respuesta en bytes
-    # 4. Devolver None si hay algún error
-    pass
+    try:
+        # 1. Realizar la petición GET
+        response = requests.get('https://api.ipify.org?format=json')
+        
+        # 2. Verificar si la petición fue exitosa (código 200)
+        if response.status_code == 200:
+            # 3. Crear y devolver un diccionario con la información solicitada
+            return {
+                'content_type': response.headers.get('Content-Type', 'desconocido'),
+                'elapsed_time': response.elapsed.total_seconds() * 1000,  # Convertir a ms
+                'response_size': len(response.content)  # Tamaño en bytes
+            }
+        else:
+            return None
+            
+    except requests.exceptions.RequestException:
+        # 4. Devolver None si hay algún error
+        return None
 
 if __name__ == "__main__":
     # Ejemplo de uso de las funciones
@@ -61,7 +80,7 @@ if __name__ == "__main__":
         if info:
             print("\nInformación de la respuesta:")
             print(f"Tipo de contenido: {info['content_type']}")
-            print(f"Tiempo de respuesta: {info['elapsed_time']} ms")
+            print(f"Tiempo de respuesta: {info['elapsed_time']:.2f} ms")
             print(f"Tamaño de la respuesta: {info['response_size']} bytes")
     else:
         print("No se pudo obtener la dirección IP")
